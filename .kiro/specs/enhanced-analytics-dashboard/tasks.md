@@ -38,8 +38,8 @@
     - Write selective update logic to minimize unnecessary renders
     - _Requirements: 7.2, 7.6_
 
-- [ ] 4. Develop enhanced dashboard components
-  - [-] 4.1 Create multi-collection overview widget
+- [-] 4. Develop enhanced dashboard components
+  - [x] 4.1 Create multi-collection overview widget
     - Build collection selector component with filtering capabilities
     - Implement collection metrics display with real-time updates
     - Add collection comparison functionality with side-by-side views

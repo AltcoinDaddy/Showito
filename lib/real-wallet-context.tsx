@@ -2,36 +2,35 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import * as fcl from "@onflow/fcl"
-import { initializeFlow } from "./flow-config"
+import { configureFlow } from "./real-flow-integration"
 
-interface WalletContextType {
+interface RealWalletContextType {
   user: any | null
   address: string | null
   isConnected: boolean
   isLoading: boolean
   connect: () => Promise<void>
   disconnect: () => void
-  signTransaction: (cadence: string, args?: any[]) => Promise<string>
+  signTransaction: (cadence: string, args: any[]) => Promise<string>
 }
 
-const WalletContext = createContext<WalletContextType | undefined>(undefined)
+const RealWalletContext = createContext<RealWalletContextType | undefined>(undefined)
 
-export function WalletProvider({ children }: { children: ReactNode }) {
+export function RealWalletProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<any | null>(null)
   const [address, setAddress] = useState<string | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Initialize Flow configuration
-    initializeFlow()
+    // Configure Flow on mount
+    configureFlow()
 
     // Subscribe to authentication state changes
     const unsubscribe = fcl.currentUser.subscribe((user: any) => {
-      console.log("FCL User state changed:", user)
       setUser(user)
       setAddress(user?.addr || null)
-      setIsConnected(!!user?.addr && user.loggedIn)
+      setIsConnected(!!user?.addr)
       setIsLoading(false)
     })
 
@@ -41,9 +40,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const connect = async () => {
     try {
       setIsLoading(true)
-      console.log("Attempting to authenticate with Flow...")
       await fcl.authenticate()
-      console.log("Flow authentication initiated")
     } catch (error) {
       console.error("Failed to connect wallet:", error)
       setIsLoading(false)
@@ -52,22 +49,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const disconnect = async () => {
     try {
-      console.log("Disconnecting wallet...")
       await fcl.unauthenticate()
-      console.log("Wallet disconnected")
     } catch (error) {
       console.error("Failed to disconnect wallet:", error)
     }
   }
 
-  const signTransaction = async (cadence: string, args: any[] = []): Promise<string> => {
+  const signTransaction = async (cadence: string, args: any[]): Promise<string> => {
     try {
-      if (!isConnected) {
-        throw new Error("Wallet not connected")
-      }
-
-      console.log("Signing transaction:", { cadence, args })
-      
       const transactionId = await fcl.mutate({
         cadence,
         args: (arg: any, t: any) => args,
@@ -77,12 +66,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         limit: 1000
       })
 
-      console.log("Transaction submitted:", transactionId)
-
       // Wait for transaction to be sealed
       const transaction = await fcl.tx(transactionId).onceSealed()
-      console.log("Transaction sealed:", transaction)
-      
       return transaction.transactionId
     } catch (error) {
       console.error("Transaction failed:", error)
@@ -91,7 +76,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <WalletContext.Provider 
+    <RealWalletContext.Provider 
       value={{ 
         user, 
         address, 
@@ -103,14 +88,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-    </WalletContext.Provider>
+    </RealWalletContext.Provider>
   )
 }
 
-export function useWallet() {
-  const context = useContext(WalletContext)
+export function useRealWallet() {
+  const context = useContext(RealWalletContext)
   if (context === undefined) {
-    throw new Error("useWallet must be used within a WalletProvider")
+    throw new Error("useRealWallet must be used within a RealWalletProvider")
   }
   return context
 }

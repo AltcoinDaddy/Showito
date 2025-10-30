@@ -1,10 +1,12 @@
-// Flow blockchain configuration and contract addresses
+import * as fcl from "@onflow/fcl"
 
+// Flow blockchain configuration and contract addresses
 export const FLOW_CONFIG = {
   // Mainnet configuration
   mainnet: {
     accessNode: "https://rest-mainnet.onflow.org",
     discoveryWallet: "https://fcl-discovery.onflow.org/authn",
+    discoveryAuthnEndpoint: "https://fcl-discovery.onflow.org/api/authn",
     contracts: {
       // NBA Top Shot contracts
       topShot: "0x0b2a3299cc857e29",
@@ -32,6 +34,7 @@ export const FLOW_CONFIG = {
   testnet: {
     accessNode: "https://rest-testnet.onflow.org",
     discoveryWallet: "https://fcl-discovery.onflow.org/testnet/authn",
+    discoveryAuthnEndpoint: "https://fcl-discovery.onflow.org/api/testnet/authn",
     contracts: {
       topShot: "0x877931736ee77cff",
       nonFungibleToken: "0x631e88ae7f1d7c20",
@@ -44,3 +47,16 @@ export const FLOW_CONFIG = {
 // Use mainnet by default
 export const NETWORK = process.env.NEXT_PUBLIC_FLOW_NETWORK || "mainnet"
 export const CONFIG = FLOW_CONFIG[NETWORK as keyof typeof FLOW_CONFIG]
+
+// Configure FCL
+export function initializeFlow() {
+  fcl.config({
+    "accessNode.api": CONFIG.accessNode,
+    "discovery.wallet": CONFIG.discoveryWallet,
+    "discovery.authn.endpoint": CONFIG.discoveryAuthnEndpoint,
+    "app.detail.title": "Showito - Flow NFT Analytics",
+    "app.detail.icon": "https://showito.app/icon.png",
+    "service.OpenID.scopes": "email email_verified name zoneinfo",
+    "fcl.limit": 9999
+  })
+}

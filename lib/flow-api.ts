@@ -31,6 +31,17 @@ export type {
 }
 
 export async function getCollections(): Promise<EnhancedFlowCollection[]> {
+  // Try real Flow integration first, fallback to mock data
+  try {
+    const { getRealCollections } = await import('./real-flow-api')
+    return await getRealCollections()
+  } catch (error) {
+    console.warn("Real Flow API failed, using mock data:", error)
+    return getMockCollections()
+  }
+}
+
+async function getMockCollections(): Promise<EnhancedFlowCollection[]> {
   try {
     // Mock enhanced collection data
     const baseCollections = [
@@ -68,6 +79,18 @@ export async function getCollections(): Promise<EnhancedFlowCollection[]> {
         totalItems: 250000,
         uniqueOwners: 65000,
         change24h: 8.7,
+        imageUrl: "/placeholder-logo.png",
+      },
+      {
+        id: "cryptokitties",
+        name: "CryptoKitties",
+        description: "Collectible and breedable digital cats on Flow",
+        floorPrice: 0.8,
+        volume24h: 15000,
+        sales24h: 420,
+        totalItems: 180000,
+        uniqueOwners: 45000,
+        change24h: -1.3,
         imageUrl: "/placeholder-logo.png",
       }
     ]
@@ -190,6 +213,17 @@ export async function getCollectionActivity(collectionId: string, limit = 50): P
 }
 
 export async function getUserPortfolio(address: string): Promise<EnhancedFlowNFT[]> {
+  // Try real Flow integration first, fallback to mock data
+  try {
+    const { getRealUserNFTs } = await import('./real-flow-api')
+    return await getRealUserNFTs(address)
+  } catch (error) {
+    console.warn("Real Flow API failed for user portfolio, using mock data:", error)
+    return getMockUserPortfolio(address)
+  }
+}
+
+async function getMockUserPortfolio(address: string): Promise<EnhancedFlowNFT[]> {
   try {
     // Validate wallet address
     const validation = ValidationService.validateWalletAddress(address)

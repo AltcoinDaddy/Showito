@@ -1,5 +1,5 @@
 import { CollectionFilters } from "@/components/collection-filters"
-import { CollectionGrid } from "@/components/collection-grid"
+import { MultiCollectionOverview } from "@/components/multi-collection-overview"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { Button } from "@/components/ui/button"
 import { GitCompare } from "lucide-react"
@@ -25,7 +25,7 @@ export default function CollectionsPage() {
         </div>
 
         <CollectionFilters />
-        <CollectionGrid />
+        <MultiCollectionOverview showComparison={true} />
       </main>
     </div>
   )

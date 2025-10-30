@@ -8,7 +8,7 @@ import { useState } from "react"
 import { usePathname } from "next/navigation"
 
 export function DashboardHeader() {
-  const { address, isConnected, disconnect } = useWallet()
+  const { address, isConnected, isLoading, disconnect } = useWallet()
   const [showWalletModal, setShowWalletModal] = useState(false)
   const pathname = usePathname()
 
@@ -57,7 +57,11 @@ export function DashboardHeader() {
               </nav>
             </div>
 
-            {isConnected ? (
+            {isLoading ? (
+              <Button variant="outline" size="sm" disabled>
+                Connecting...
+              </Button>
+            ) : isConnected ? (
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" className="font-mono bg-transparent">
                   {formatAddress(address!)}

@@ -1,186 +1,213 @@
-// Cadence scripts for reading data from Flow blockchain
+/**
+ * Cadence scripts for querying Flow blockchain data
+ */
 
-export const GET_COLLECTION_IDS = `
+// Get NBA Top Shot collection info
+export const GET_TOPSHOT_COLLECTION_INFO = `
+import TopShot from 0x0b2a3299cc857e29
 import NonFungibleToken from 0x1d7e57aa55817448
-
-pub fun main(address: Address): [UInt64] {
-  let account = getAccount(address)
-  
-  let collectionRef = account.getCapability(/public/MomentCollection)
-    .borrow<&{NonFungibleToken.CollectionPublic}>()
-    ?? panic("Could not borrow collection reference")
-  
-  return collectionRef.getIDs()
-}
-`
-
-export const GET_TOP_SHOT_MOMENTS = `
-import TopShot from 0x0b2a3299cc857e29
-
-pub struct MomentData {
-  pub let id: UInt64
-  pub let playID: UInt32
-  pub let play: String
-  pub let setID: UInt32
-  pub let serialNumber: UInt32
-  
-  init(id: UInt64, playID: UInt32, play: String, setID: UInt32, serialNumber: UInt32) {
-    self.id = id
-    self.playID = playID
-    self.play = play
-    self.setID = setID
-    self.serialNumber = serialNumber
-  }
-}
-
-pub fun main(address: Address, momentID: UInt64): MomentData? {
-  let account = getAccount(address)
-  
-  let collectionRef = account.getCapability(/public/MomentCollection)
-    .borrow<&{TopShot.MomentCollectionPublic}>()
-  
-  if collectionRef == nil {
-    return nil
-  }
-  
-  let moment = collectionRef!.borrowMoment(id: momentID)
-  if moment == nil {
-    return nil
-  }
-  
-  let momentData = moment!.data
-  
-  return MomentData(
-    id: momentID,
-    playID: momentData.playID,
-    play: "Moment",
-    setID: momentData.setID,
-    serialNumber: momentData.serialNumber
-  )
-}
-`
-
-export const GET_ALL_MOMENTS = `
-import TopShot from 0x0b2a3299cc857e29
-
-pub fun main(address: Address): [UInt64] {
-  let account = getAccount(address)
-  
-  let collectionRef = account.getCapability(/public/MomentCollection)
-    .borrow<&{TopShot.MomentCollectionPublic}>()
-    ?? panic("Could not borrow moment collection")
-  
-  return collectionRef.getIDs()
-}
-`
-
-export const GET_PLAY_METADATA = `
-import TopShot from 0x0b2a3299cc857e29
-
-pub fun main(playID: UInt32): {String: String} {
-  return TopShot.getPlayMetaData(playID: playID) ?? {}
-}
-`
-
-export const GET_SET_NAME = `
-import TopShot from 0x0b2a3299cc857e29
-
-pub fun main(setID: UInt32): String {
-  return TopShot.getSetName(setID: setID) ?? "Unknown Set"
-}
-`
-
-export const GET_MOMENT_METADATA = `
-import TopShot from 0x0b2a3299cc857e29
 import MetadataViews from 0x1d7e57aa55817448
 
-pub struct NFTData {
-  pub let id: UInt64
-  pub let name: String
-  pub let description: String
-  pub let thumbnail: String
-  pub let serialNumber: UInt32
-  pub let playID: UInt32
-  pub let setID: UInt32
-  
-  init(
-    id: UInt64,
-    name: String,
-    description: String,
-    thumbnail: String,
-    serialNumber: UInt32,
-    playID: UInt32,
-    setID: UInt32
-  ) {
-    self.id = id
-    self.name = name
-    self.description = description
-    self.thumbnail = thumbnail
-    self.serialNumber = serialNumber
-    self.playID = playID
-    self.setID = setID
-  }
+pub struct CollectionInfo {
+    pub let name: String
+    pub let description: String
+    pub let totalSupply: UInt64
+    pub let squareImage: String?
+    pub let bannerImage: String?
+    
+    init(name: String, description: String, totalSupply: UInt64, squareImage: String?, bannerImage: String?) {
+        self.name = name
+        self.description = description
+        self.totalSupply = totalSupply
+        self.squareImage = squareImage
+        self.bannerImage = bannerImage
+    }
 }
 
-pub fun main(address: Address, momentID: UInt64): NFTData? {
-  let account = getAccount(address)
-  
-  let collection = account.getCapability(/public/MomentCollection)
-    .borrow<&{TopShot.MomentCollectionPublic}>()
-    ?? panic("Could not borrow moment collection")
-  
-  let nft = collection.borrowMoment(id: momentID)
-    ?? panic("Moment does not exist")
-  
-  let metadata = nft.resolveView(Type<MetadataViews.Display>())! as! MetadataViews.Display
-  
-  return NFTData(
-    id: momentID,
-    name: metadata.name,
-    description: metadata.description,
-    thumbnail: metadata.thumbnail.uri(),
-    serialNumber: nft.data.serialNumber,
-    playID: nft.data.playID,
-    setID: nft.data.setID
-  )
+pub fun main(): CollectionInfo {
+    let collection = TopShot.borrowCollectionPublic()
+    
+    return CollectionInfo(
+        name: "NBA Top Shot",
+        description: "Officially licensed NBA collectible highlights",
+        totalSupply: TopShot.totalSupply,
+        squareImage: nil,
+        bannerImage: nil
+    )
 }
 `
 
-export const GET_MARKET_LISTINGS = `
-import TopShotMarketV3 from 0xc1e4f4f4c4257510
+// Get user's NBA Top Shot moments
+export const GET_USER_TOPSHOT_MOMENTS = `
+import TopShot from 0x0b2a3299cc857e29
+import NonFungibleToken from 0x1d7e57aa55817448
 
-pub fun main(): [UInt64] {
-  return TopShotMarketV3.getSaleIDs()
+pub struct MomentInfo {
+    pub let id: UInt64
+    pub let playID: UInt32
+    pub let play: TopShot.Play
+    pub let setID: UInt32
+    pub let serialNumber: UInt32
+    
+    init(id: UInt64, playID: UInt32, play: TopShot.Play, setID: UInt32, serialNumber: UInt32) {
+        self.id = id
+        self.playID = playID
+        self.play = play
+        self.setID = setID
+        self.serialNumber = serialNumber
+    }
+}
+
+pub fun main(address: Address): [MomentInfo] {
+    let account = getAccount(address)
+    
+    let collectionRef = account
+        .getCapability(/public/MomentCollection)
+        .borrow<&{TopShot.MomentCollectionPublic}>()
+        ?? panic("Could not borrow capability from public collection")
+    
+    let moments: [MomentInfo] = []
+    let ids = collectionRef.getIDs()
+    
+    for id in ids {
+        let moment = collectionRef.borrowMoment(id: id)
+            ?? panic("Could not borrow moment")
+        
+        let momentData = TopShot.getMomentData(id: id)
+        let play = TopShot.getPlayData(id: momentData.playID)
+        
+        moments.append(MomentInfo(
+            id: id,
+            playID: momentData.playID,
+            play: play,
+            setID: momentData.setID,
+            serialNumber: momentData.serialNumber
+        ))
+    }
+    
+    return moments
 }
 `
 
-export const GET_LISTING_DETAILS = `
-import TopShotMarketV3 from 0xc1e4f4f4c4257510
+// Get NFL All Day collection info
+export const GET_ALLDAY_COLLECTION_INFO = `
+import AllDay from 0xe4cf4bdc1751c65d
+import NonFungibleToken from 0x1d7e57aa55817448
 
-pub struct ListingData {
-  pub let momentID: UInt64
-  pub let price: UFix64
-  pub let seller: Address
-  
-  init(momentID: UInt64, price: UFix64, seller: Address) {
-    self.momentID = momentID
-    self.price = price
-    self.seller = seller
-  }
+pub struct CollectionInfo {
+    pub let name: String
+    pub let description: String
+    pub let totalSupply: UInt64
+    
+    init(name: String, description: String, totalSupply: UInt64) {
+        self.name = name
+        self.description = description
+        self.totalSupply = totalSupply
+    }
 }
 
-pub fun main(saleID: UInt64): ListingData? {
-  let saleCollection = TopShotMarketV3.borrowSaleCollection()
-  let sale = saleCollection.borrowSale(saleID: saleID)
-  
-  if sale == nil {
-    return nil
-  }
-  
-  return ListingData(
-    momentID: sale!.momentID,
-    price: sale!.price,
-    seller: sale!.seller
-  )
+pub fun main(): CollectionInfo {
+    return CollectionInfo(
+        name: "NFL All Day",
+        description: "Officially licensed NFL collectible highlights",
+        totalSupply: AllDay.totalSupply
+    )
+}
+`
+
+// Get user's NFL All Day moments
+export const GET_USER_ALLDAY_MOMENTS = `
+import AllDay from 0xe4cf4bdc1751c65d
+import NonFungibleToken from 0x1d7e57aa55817448
+
+pub struct MomentInfo {
+    pub let id: UInt64
+    pub let playID: UInt32
+    pub let serialNumber: UInt32
+    
+    init(id: UInt64, playID: UInt32, serialNumber: UInt32) {
+        self.id = id
+        self.playID = playID
+        self.serialNumber = serialNumber
+    }
+}
+
+pub fun main(address: Address): [MomentInfo] {
+    let account = getAccount(address)
+    
+    let collectionRef = account
+        .getCapability(/public/MomentNFTCollection)
+        .borrow<&{AllDay.MomentNFTCollectionPublic}>()
+        ?? panic("Could not borrow capability from public collection")
+    
+    let moments: [MomentInfo] = []
+    let ids = collectionRef.getIDs()
+    
+    for id in ids {
+        let moment = collectionRef.borrowMomentNFT(id: id)
+            ?? panic("Could not borrow moment")
+        
+        moments.append(MomentInfo(
+            id: id,
+            playID: moment.playID,
+            serialNumber: moment.serialNumber
+        ))
+    }
+    
+    return moments
+}
+`
+
+// Check if account has collections set up
+export const CHECK_ACCOUNT_SETUP = `
+import TopShot from 0x0b2a3299cc857e29
+import AllDay from 0xe4cf4bdc1751c65d
+import NonFungibleToken from 0x1d7e57aa55817448
+
+pub struct AccountSetup {
+    pub let hasTopShotCollection: Bool
+    pub let hasAllDayCollection: Bool
+    pub let address: Address
+    
+    init(hasTopShotCollection: Bool, hasAllDayCollection: Bool, address: Address) {
+        self.hasTopShotCollection = hasTopShotCollection
+        self.hasAllDayCollection = hasAllDayCollection
+        self.address = address
+    }
+}
+
+pub fun main(address: Address): AccountSetup {
+    let account = getAccount(address)
+    
+    let hasTopShot = account
+        .getCapability(/public/MomentCollection)
+        .borrow<&{TopShot.MomentCollectionPublic}>() != nil
+    
+    let hasAllDay = account
+        .getCapability(/public/MomentNFTCollection)
+        .borrow<&{AllDay.MomentNFTCollectionPublic}>() != nil
+    
+    return AccountSetup(
+        hasTopShotCollection: hasTopShot,
+        hasAllDayCollection: hasAllDay,
+        address: address
+    )
+}
+`
+
+// Get Flow account balance
+export const GET_FLOW_BALANCE = `
+import FlowToken from 0x1654653399040a61
+import FungibleToken from 0xf233dcee88fe0abe
+
+pub fun main(address: Address): UFix64 {
+    let account = getAccount(address)
+    
+    let vaultRef = account
+        .getCapability(/public/flowTokenBalance)
+        .borrow<&FlowToken.Vault{FungibleToken.Balance}>()
+        ?? panic("Could not borrow Balance reference to the Vault")
+    
+    return vaultRef.balance
 }
 `

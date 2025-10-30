@@ -95,7 +95,11 @@ export function CollectionGrid() {
           className="p-6 bg-card border-border hover:border-foreground transition-colors cursor-pointer group"
         >
           <div className="space-y-4">
-            <div className="aspect-square bg-muted rounded-lg" />
+            <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
+              <div className="text-2xl font-bold text-muted-foreground">
+                {collection.name.split(' ').map(word => word[0]).join('').slice(0, 3)}
+              </div>
+            </div>
 
             <div className="space-y-2">
               <div className="flex items-start justify-between">
